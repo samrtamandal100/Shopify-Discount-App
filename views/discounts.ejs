@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Discount Configurations</title>
+    <link rel="stylesheet" type="text/css" href="/styles.css">
+    <style>
+        /* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 300px;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+input, select {
+    display: block;
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#discounts-list {
+    width: 300px;
+}
+
+#discounts {
+    list-style-type: none;
+    padding: 0;
+}
+
+#discounts li {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+#discounts li strong {
+    font-weight: bold;
+}
+
+#discounts li button {
+    background-color: #28a745;
+    margin: 5px 0;
+}
+
+#discounts li button:last-child {
+    background-color: #dc3545;
+}
+
+#discounts li button:hover {
+    opacity: 0.9;
+}
+
+    </style>
+</head>
+
+<body>
+    <h1>Discount Configurations</h1>
+    <form id="discount-form">
+        <input type="hidden" id="discount-id">
+        <label>Type:</label>
+        <select id="discount-type">
+            <option value="percentage">Percentage</option>
+            <option value="fixed_amount">Fixed Amount</option>
+        </select>
+        <label>Value:</label>
+        <input type="number" id="discount-value">
+        <label>Minimum Amount:</label>
+        <input type="number" id="minimum-amount">
+        <label>Maximum Amount:</label>
+        <input type="number" id="maximum-amount">
+        <label>Collections :</label>
+        <input type="text" id="collections">
+        <label>Products :</label>
+        <input type="text" id="products">
+        <button type="button" onclick="saveDiscount()">Save</button>
+    </form>
+    <div id="discounts-list">
+        <h2>Existing Discounts</h2>
+        <ul id="discounts">
+            <% discountConfigurations.forEach(config => { %>
+                <li>
+                    <strong>Type:</strong> <%= config.discountType %>,
+                    <strong>Value:</strong> <%= config.value %>,
+                    <strong>Min Amount:</strong> <%= config.minimumAmount %>,
+                    <strong>Max Amount:</strong> <%= config.maximumAmount %>,
+                    <strong>Collections:</strong> <%= config.collections.join(', ') %>,
+                    <strong>Products:</strong> <%= config.products.join(', ') %>
+                    <button onclick="editDiscount('<%= config.id %>')">Edit</button>
+                    <button onclick="deleteDiscount('<%= config.id %>')">Delete</button>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+    <script>
+
+async function saveDiscount() {
+    const id = document.getElementById('discount-id').value;
+    const discountType = document.getElementById('discount-type').value;
+    const value = document.getElementById('discount-value').value;
+    const minimumAmount = document.getElementById('minimum-amount').value;
+    const maximumAmount = document.getElementById('maximum-amount').value;
+    const collections = document.getElementById('collections').value.split(',').map(item => item.trim());
+    const products = document.getElementById('products').value.split(',').map(item => item.trim());
+
+    const discountConfig = { discountType, value, minimumAmount, maximumAmount, collections, products };
+
+    if (id) {
+        await fetch(`/discount/update/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(discountConfig),
+        });
+    } else {
+        await fetch('/discount/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(discountConfig),
+        });
+    }
+
+    location.reload();
+}
+
+async function editDiscount(id) {
+    const response = await fetch(`/discount/${id}`);
+    const discountConfig = await response.json();
+
+    document.getElementById('discount-id').value = discountConfig.id;
+    document.getElementById('discount-type').value = discountConfig.discountType;
+    document.getElementById('discount-value').value = discountConfig.value;
+    document.getElementById('minimum-amount').value = discountConfig.minimumAmount;
+    document.getElementById('maximum-amount').value = discountConfig.maximumAmount;
+    document.getElementById('collections').value = discountConfig.collections.join(', ');
+    document.getElementById('products').value = discountConfig.products.join(', ');
+}
+
+async function deleteDiscount(id) {
+    await fetch(`/discount/delete/${id}`, {
+        method: 'DELETE',
+    });
+
+    location.reload();
+}
+
+    </script>
+</body>
+</html>
